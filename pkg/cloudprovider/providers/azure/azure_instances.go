@@ -126,6 +126,38 @@ func (az *Cloud) InstanceID(name types.NodeName) (string, error) {
 			}
 		}
 	}
+
+	if az.Config.ScaleMode == scaleModeVMSS {
+		return az.getVMSSInstanceID(name)
+	}
+
+	return az.getVMASInstanceID(name)
+}
+
+func (az *Cloud) getVMSSInstanceID(name types.NodeName) (string, error) {
+	var machine compute.VirtualMachineScaleSetVM
+	var exists bool
+	var err error
+	az.operationPollRateLimiter.Accept()
+	machine, exists, err = az.getScaleSetsVM(name)
+	if err != nil {
+		if az.CloudProviderBackoff {
+			glog.V(2).Infof("InstanceID(%s) backing off", name)
+			machine, exists, err = az.GetScaleSetVirtualMachineWithRetry(name)
+			if err != nil {
+				glog.V(2).Infof("InstanceID(%s) abort backoff", name)
+				return "", err
+			}
+		} else {
+			return "", err
+		}
+	} else if !exists {
+		return "", cloudprovider.InstanceNotFound
+	}
+	return *machine.InstanceID, nil
+}
+
+func (az *Cloud) getVMASInstanceID(name types.NodeName) (string, error) {
 	var machine compute.VirtualMachine
 	var exists bool
 	var err error
@@ -177,14 +209,31 @@ func (az *Cloud) InstanceType(name types.NodeName) (string, error) {
 			}
 		}
 	}
-	machine, exists, err := az.getVirtualMachine(name)
-	if err != nil {
-		glog.Errorf("error: az.InstanceType(%s), az.getVirtualMachine(%s) err=%v", name, name, err)
-		return "", err
-	} else if !exists {
-		return "", cloudprovider.InstanceNotFound
+
+	machineType := ""
+	if az.Config.ScaleMode == scaleModeVMSS {
+		machine, exists, err := az.getScaleSetsVM(name)
+		if err != nil {
+			glog.Errorf("error: az.InstanceType(%s), az.getScaleSetsVM(%s) err=%v", name, name, err)
+			return "", err
+		} else if !exists {
+			return "", cloudprovider.InstanceNotFound
+		}
+
+		machineType = string(machine.HardwareProfile.VMSize)
+	} else {
+		machine, exists, err := az.getVirtualMachine(name)
+		if err != nil {
+			glog.Errorf("error: az.InstanceType(%s), az.getVirtualMachine(%s) err=%v", name, name, err)
+			return "", err
+		} else if !exists {
+			return "", cloudprovider.InstanceNotFound
+		}
+
+		machineType = string(machine.HardwareProfile.VMSize)
 	}
-	return string(machine.HardwareProfile.VMSize), nil
+
+	return machineType, nil
 }
 
 // AddSSHKeyToAllInstances adds an SSH public key as a legal identity for all instances

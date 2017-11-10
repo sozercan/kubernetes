@@ -61,6 +61,27 @@ func (az *Cloud) getVirtualMachine(nodeName types.NodeName) (vm compute.VirtualM
 	return vm, exists, err
 }
 
+func (az *Cloud) getScaleSetsVM(nodeName types.NodeName) (vm compute.VirtualMachineScaleSetVM, exists bool, err error) {
+	var realErr error
+
+	vmName := string(nodeName)
+	az.operationPollRateLimiter.Accept()
+	glog.V(10).Infof("VirtualMachineScaleSetVMsClient.Get(%s): start", vmName)
+	vm, err = az.VirtualMachineScaleSetVMsClient.Get(az.ResourceGroup, az.Config.PrimaryScaleSetName, vmName)
+	glog.V(10).Infof("VirtualMachineScaleSetVMsClient.Get(%s): end", vmName)
+
+	exists, realErr = checkResourceExistsFromError(err)
+	if realErr != nil {
+		return vm, false, realErr
+	}
+
+	if !exists {
+		return vm, false, nil
+	}
+
+	return vm, exists, err
+}
+
 func (az *Cloud) getRouteTable() (routeTable network.RouteTable, exists bool, err error) {
 	var realErr error
 

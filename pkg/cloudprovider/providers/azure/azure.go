@@ -51,6 +51,9 @@ const (
 	backoffExponentDefault = 1.5
 	backoffDurationDefault = 5 // in seconds
 	backoffJitterDefault   = 1.0
+
+	scaleModeVMSS = "vmss"
+	scaleModeVMAS = "vmas"
 )
 
 // Config holds the configuration parsed from the --cloud-config flag
@@ -113,6 +116,16 @@ type Config struct {
 
 	// Use managed service identity for the virtual machine to access Azure ARM APIs
 	UseManagedIdentityExtension bool `json:"useManagedIdentityExtension"`
+
+	// Scale mode of azure nodes. Candidate valudes include: vmss and vmas.
+	// If not set, it will be default to vmas.
+	ScaleMode string `json:"scaleMode" yaml:"scaleMode"`
+	// (Optional) The name of the scale set that should be used as the load balancer backend
+	// If this is set, the Azure cloudprovider will only add nodes from that scale set to the load
+	// balancer backend pool. If this is not set, and multiple agent pools (scale sets) are used, then
+	// the cloudprovider will try to add all nodes to a single backend pool which is forbidden.
+	// In other words, if you use multiple agent pools (scale sets), you MUST set this field.
+	PrimaryScaleSetName string `json:"primaryScaleSetName" yaml:"primaryScaleSetName"`
 }
 
 // Cloud holds the config and clients
@@ -132,6 +145,10 @@ type Cloud struct {
 	operationPollRateLimiter flowcontrol.RateLimiter
 	resourceRequestBackoff   wait.Backoff
 	metadata                 *InstanceMetadata
+
+	// Clients for vmss.
+	VirtualMachineScaleSetsClient   compute.VirtualMachineScaleSetsClient
+	VirtualMachineScaleSetVMsClient compute.VirtualMachineScaleSetVMsClient
 
 	*BlobDiskController
 	*ManagedDiskController
@@ -256,6 +273,18 @@ func NewCloud(configReader io.Reader) (cloudprovider.Interface, error) {
 	az.VirtualMachinesClient.Authorizer = autorest.NewBearerAuthorizer(servicePrincipalToken)
 	az.VirtualMachinesClient.PollingDelay = 5 * time.Second
 	configureUserAgent(&az.VirtualMachinesClient.Client)
+
+	az.VirtualMachineScaleSetVMsClient = compute.NewVirtualMachineScaleSetVMsClient(az.SubscriptionID)
+	az.VirtualMachineScaleSetVMsClient.BaseURI = az.Environment.ResourceManagerEndpoint
+	az.VirtualMachineScaleSetVMsClient.Authorizer = autorest.NewBearerAuthorizer(servicePrincipalToken)
+	az.VirtualMachineScaleSetVMsClient.PollingDelay = 5 * time.Second
+	configureUserAgent(&az.VirtualMachineScaleSetVMsClient.Client)
+
+	az.VirtualMachineScaleSetsClient = compute.NewVirtualMachineScaleSetsClient(az.SubscriptionID)
+	az.VirtualMachineScaleSetsClient.BaseURI = az.Environment.ResourceManagerEndpoint
+	az.VirtualMachineScaleSetsClient.Authorizer = autorest.NewBearerAuthorizer(servicePrincipalToken)
+	az.VirtualMachineScaleSetsClient.PollingDelay = 5 * time.Second
+	configureUserAgent(&az.VirtualMachineScaleSetsClient.Client)
 
 	az.PublicIPAddressesClient = network.NewPublicIPAddressesClient(az.SubscriptionID)
 	az.PublicIPAddressesClient.BaseURI = az.Environment.ResourceManagerEndpoint
