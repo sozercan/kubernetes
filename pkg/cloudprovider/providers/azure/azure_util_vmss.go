@@ -51,10 +51,10 @@ func (az *Cloud) getIPForVMSSMachine(nodeName types.NodeName) (string, error) {
 
 	az.operationPollRateLimiter.Accept()
 	glog.V(10).Infof("InterfacesClient.Get(%q): start", nicName)
-	nic, err := az.InterfacesClient.GetVirtualMachineScaleSetNetworkInterface(az.ResourceGroup, az.Config.PrimaryScaleSetName, "", nicName, "")
+	nic, err := az.InterfacesClient.GetVirtualMachineScaleSetNetworkInterface(az.ResourceGroup, az.Config.PrimaryScaleSetName, *machine.InstanceID, nicName, "")
 	glog.V(10).Infof("InterfacesClient.Get(%q): end", nicName)
 	if err != nil {
-		glog.Errorf("error: az.getIPForVMSSMachine(%s), az.InterfacesClient.Get(%s, %s, %s), err=%v", nodeName, az.ResourceGroup, nicName, "", err)
+		glog.Errorf("error: az.getIPForVMSSMachine(%s), az.GetVirtualMachineScaleSetNetworkInterface.Get(%s, %s, %s), err=%v", nodeName, az.ResourceGroup, nicName, "", err)
 		return "", err
 	}
 

@@ -154,7 +154,7 @@ func (az *Cloud) getVMSSInstanceID(name types.NodeName) (string, error) {
 	} else if !exists {
 		return "", cloudprovider.InstanceNotFound
 	}
-	return *machine.InstanceID, nil
+	return *machine.ID, nil
 }
 
 func (az *Cloud) getVMASInstanceID(name types.NodeName) (string, error) {
