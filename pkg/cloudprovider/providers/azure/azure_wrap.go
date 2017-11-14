@@ -81,14 +81,14 @@ func (az *Cloud) getScaleSetsVM(nodeName types.NodeName) (vm compute.VirtualMach
 		glog.V(10).Infof("VirtualMachineScaleSetVMsClient.ListAllNextResults(%v): end", az.ResourceGroup)
 		if err != nil {
 			glog.Errorf("error: az.VirtualMachineScaleSetVMsClient.ListAllNextResults(%v), err=%v", result, err)
-			return nil, err
+			return vm, exists, err
 		}
 
 		morePages = (result.Value != nil && len(*result.Value) > 1)
 	}
 
 	for _, v := range allNodes {
-		if v.OsProfile.ComputerName == vmName {
+		if v.OsProfile.ComputerName != nil && *v.OsProfile.ComputerName == vmName {
 			exists = true
 			vm = v
 			break
