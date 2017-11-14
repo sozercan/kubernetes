@@ -63,20 +63,36 @@ func (az *Cloud) getVirtualMachine(nodeName types.NodeName) (vm compute.VirtualM
 
 func (az *Cloud) getScaleSetsVM(nodeName types.NodeName) (vm compute.VirtualMachineScaleSetVM, exists bool, err error) {
 	var realErr error
-
 	vmName := string(nodeName)
-	az.operationPollRateLimiter.Accept()
-	glog.V(10).Infof("VirtualMachineScaleSetVMsClient.Get(%s): start", vmName)
-	vm, err = az.VirtualMachineScaleSetVMsClient.Get(az.ResourceGroup, az.Config.PrimaryScaleSetName, vmName)
-	glog.V(10).Infof("VirtualMachineScaleSetVMsClient.Get(%s): end", vmName)
+	allNodes := []compute.VirtualMachineScaleSetVM{}
 
-	exists, realErr = checkResourceExistsFromError(err)
-	if realErr != nil {
-		return vm, false, realErr
+	az.operationPollRateLimiter.Accept()
+	glog.V(10).Infof("VirtualMachineScaleSetVMsClient.List: start for %v", vmName)
+	result, err := az.VirtualMachineScaleSetVMsClient.List(az.ResourceGroup, az.Config.PrimaryScaleSetName, "", "", "")
+	glog.V(10).Infof("VirtualMachineScaleSetVMsClient.List: end for %s", vmName)
+
+	morePages := (result.Value != nil && len(*result.Value) > 1)
+	for morePages {
+		allNodes = append(allNodes, *result.Value...)
+
+		az.operationPollRateLimiter.Accept()
+		glog.V(10).Infof("VirtualMachineScaleSetVMsClient.ListAllNextResults(%v): start", az.ResourceGroup)
+		result, err = az.VirtualMachineScaleSetVMsClient.ListAllNextResults(result)
+		glog.V(10).Infof("VirtualMachineScaleSetVMsClient.ListAllNextResults(%v): end", az.ResourceGroup)
+		if err != nil {
+			glog.Errorf("error: az.VirtualMachineScaleSetVMsClient.ListAllNextResults(%v), err=%v", result, err)
+			return nil, err
+		}
+
+		morePages = (result.Value != nil && len(*result.Value) > 1)
 	}
 
-	if !exists {
-		return vm, false, nil
+	for _, v := range allNodes {
+		if v.OsProfile.ComputerName == vmName {
+			exists = true
+			vm = v
+			break
+		}
 	}
 
 	return vm, exists, err
