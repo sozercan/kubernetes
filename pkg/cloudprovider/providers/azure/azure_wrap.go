@@ -62,7 +62,6 @@ func (az *Cloud) getVirtualMachine(nodeName types.NodeName) (vm compute.VirtualM
 }
 
 func (az *Cloud) getScaleSetsVM(nodeName types.NodeName) (vm compute.VirtualMachineScaleSetVM, exists bool, err error) {
-	var realErr error
 	vmName := string(nodeName)
 	allNodes := []compute.VirtualMachineScaleSetVM{}
 

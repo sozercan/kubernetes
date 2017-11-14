@@ -220,7 +220,9 @@ func (az *Cloud) InstanceType(name types.NodeName) (string, error) {
 			return "", cloudprovider.InstanceNotFound
 		}
 
-		machineType = string(machine.HardwareProfile.VMSize)
+		if machine.HardwareProfile != nil {
+			machineType = string(machine.HardwareProfile.VMSize)
+		}
 	} else {
 		machine, exists, err := az.getVirtualMachine(name)
 		if err != nil {

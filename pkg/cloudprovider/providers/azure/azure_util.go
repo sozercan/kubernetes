@@ -261,6 +261,14 @@ outer:
 }
 
 func (az *Cloud) getIPForMachine(nodeName types.NodeName) (string, error) {
+	if az.Config.ScaleMode == scaleModeVMSS {
+		return az.getIPForVMSSMachine(nodeName)
+	}
+
+	return az.getIPForVMASMachine(nodeName)
+}
+
+func (az *Cloud) getIPForVMASMachine(nodeName types.NodeName) (string, error) {
 	az.operationPollRateLimiter.Accept()
 	machine, exists, err := az.getVirtualMachine(nodeName)
 	if !exists {
