@@ -76,11 +76,11 @@ func (az *Cloud) getScaleSetsVM(nodeName types.NodeName) (vm compute.VirtualMach
 		allNodes = append(allNodes, *result.Value...)
 
 		az.operationPollRateLimiter.Accept()
-		glog.V(10).Infof("VirtualMachineScaleSetVMsClient.ListAllNextResults(%v): start", az.ResourceGroup)
-		result, err = az.VirtualMachineScaleSetVMsClient.ListAllNextResults(result)
-		glog.V(10).Infof("VirtualMachineScaleSetVMsClient.ListAllNextResults(%v): end", az.ResourceGroup)
+		glog.V(10).Infof("VirtualMachineScaleSetVMsClient.ListNextResults(%v): start", az.ResourceGroup)
+		result, err = az.VirtualMachineScaleSetVMsClient.ListNextResults(result)
+		glog.V(10).Infof("VirtualMachineScaleSetVMsClient.ListNextResults(%v): end", az.ResourceGroup)
 		if err != nil {
-			glog.Errorf("error: az.VirtualMachineScaleSetVMsClient.ListAllNextResults(%v), err=%v", result, err)
+			glog.Errorf("error: az.VirtualMachineScaleSetVMsClient.ListNextResults(%v), err=%v", result, err)
 			return vm, exists, err
 		}
 
