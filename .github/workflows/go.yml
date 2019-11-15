@@ -14,6 +14,12 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
 
-      - name: Make
+      - name: Get Kind
         run: |
-          make
+          curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-$(uname)-amd64
+          chmod +x ./kind
+          mv ./kind /usr/local/bin
+
+      - name: Build node-image
+        run: |
+          kind build node-image
