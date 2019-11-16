@@ -23,6 +23,6 @@ jobs:
       - name: Build node-image
         run: |
           kind version
-          kind build node-image --loglevel debug
+          kind build node-image --loglevel debug --type=bazel
         env:
           GOPATH: /home/runner/work/kubernetes/go
