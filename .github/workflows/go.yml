@@ -16,13 +16,17 @@ jobs:
         with:
           path: go/src/k8s.io/kubernetes
 
-      - name: Get kind
+      - name: Build kind from master
         run: |
-          GO111MODULE="on" go get sigs.k8s.io/kind@9655c6e5798ae85afcf4e6cc411cfcb6ffc52dcf
+          GO111MODULE="on" go get sigs.k8s.io/kind@master
+        env:
+          GOPATH: /home/runner/work/kubernetes/go
+          GOBIN: /home/runner/work/kubernetes/go/bin
 
-      - name: Build node-image
+      - name: Build kind node-image
         run: |
           kind version
           kind build node-image --loglevel debug --type=bazel
         env:
           GOPATH: /home/runner/work/kubernetes/go
+          GOBIN: /home/runner/work/kubernetes/go/bin
