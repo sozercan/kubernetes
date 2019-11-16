@@ -18,7 +18,7 @@ jobs:
 
       - name: Get kind
         run: |
-          GO111MODULE="on" go get sigs.k8s.io/kind
+          GO111MODULE="on" go get sigs.k8s.io/kind@master
 
       - name: Build node-image
         run: |
