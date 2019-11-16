@@ -18,10 +18,11 @@ jobs:
 
       - name: Get kind
         run: |
-          GO111MODULE="on" go get sigs.k8s.io/kind@master
+          GO111MODULE="on" go get sigs.k8s.io/kind@9655c6e5798ae85afcf4e6cc411cfcb6ffc52dcf
 
       - name: Build node-image
         run: |
+          kind version
           kind build node-image --loglevel debug
         env:
           GOPATH: /home/runner/work/kubernetes/go
