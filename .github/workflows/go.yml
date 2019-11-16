@@ -26,7 +26,7 @@ jobs:
       - name: Build kind node-image
         run: |
           $GOBIN/kind version
-          $GOBIN/kind build node-image --loglevel debug
+          $GOBIN/kind build node-image -v 10
         env:
           GOPATH: /home/runner/work/kubernetes/go
           GOBIN: /home/runner/work/kubernetes/go/bin
