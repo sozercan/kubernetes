@@ -19,10 +19,6 @@ jobs:
         with:
           path: go/src/k8s.io/kubernetes
 
-      - name: make quick-release
-        run: |
-          make quick-release
-
       - name: install kubectl
         uses: Azure/setup-kubectl@v1
 
@@ -30,23 +26,32 @@ jobs:
       - name: Build kind binary from master
         run: |
           GO111MODULE="on" go get sigs.k8s.io/kind@master
-        env:
-          GOPATH: /home/runner/work/kubernetes/go
-          GOBIN: /home/runner/work/kubernetes/go/bin
 
       - name: Build kind node-image
         run: |
+          cat <<EOF > "kind-config.yaml"
+          # config for 1 control plane node and 2 workers (necessary for conformance)
+          kind: Cluster
+          apiVersion: kind.sigs.k8s.io/v1alpha3
+          nodes:
+          - role: control-plane
+          - role: worker
+          - role: worker
+          EOF
           $GOBIN/kind version
-          GOFLAGS= $GOBIN/kind build node-image -v 10 --kube-root /home/runner/work/kubernetes/go/src/k8s.io/kubernetes
           # https://github.com/kubernetes-sigs/kind/pull/819
-        env:
-          GOPATH: /home/runner/work/kubernetes/go
-          GOBIN: /home/runner/work/kubernetes/go/bin
+          GOFLAGS= $GOBIN/kind build node-image
 
       - name: Create kind cluster
         run: |
-          GOFLAGS= $GOBIN/kind create cluster --image kindest/node:latest
-          kubectl cluster-info --context kind-kind
+          GOFLAGS= $GOBIN/kind create cluster --image kindest/node:latest -v=3 --wait=1m --config=kind-config.yaml
+          kubectl version
+
+      - name: Run tests
+        run: |
+          ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 '--ginkgo.focus=\[Conformance\]'
+          # '--ginkgo.skip=\[Serial\]'
         env:
-          GOPATH: /home/runner/work/kubernetes/go
-          GOBIN: /home/runner/work/kubernetes/go/bin
+          GINKGO_PARALLEL: "y"
+          KUBERNETES_CONFORMANCE_TEST: "y"
+          KUBERNETES_PROVIDER: skeleton
