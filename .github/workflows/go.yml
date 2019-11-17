@@ -14,7 +14,7 @@ jobs:
           GOPATH: /home/runner/work/kubernetes/go
           GOBIN: /home/runner/work/kubernetes/go/bin
 
-      - name: Check out code into the Go module directory
+      - name: Checkout code
         uses: actions/checkout@v1
         with:
           path: go/src/k8s.io/kubernetes
@@ -22,17 +22,27 @@ jobs:
       - name: install kubectl
         uses: Azure/setup-kubectl@v1
 
-      - name: Build kind from master
+        # https://github.com/kubernetes-sigs/kind/pull/825
+      - name: Build kind binary from master
         run: |
           GO111MODULE="on" go get sigs.k8s.io/kind@master
+        env:
+          GOPATH: /home/runner/work/kubernetes/go
+          GOBIN: /home/runner/work/kubernetes/go/bin
 
       - name: Build kind node-image
         run: |
           $GOBIN/kind version
           GOFLAGS= $GOBIN/kind build node-image
+          # https://github.com/kubernetes-sigs/kind/pull/819
+        env:
+          GOPATH: /home/runner/work/kubernetes/go
+          GOBIN: /home/runner/work/kubernetes/go/bin
 
-      - name: Build kind node-image
+      - name: Create kind cluster
         run: |
-          $GOBIN/kind version
           GOFLAGS= $GOBIN/kind create cluster --image kindest/node:latest
           kubectl cluster-info --context kind-kind
+        env:
+          GOPATH: /home/runner/work/kubernetes/go
+          GOBIN: /home/runner/work/kubernetes/go/bin
