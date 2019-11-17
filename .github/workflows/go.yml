@@ -33,7 +33,7 @@ jobs:
       - name: Build kind node-image
         run: |
           $GOBIN/kind version
-          GOFLAGS= $GOBIN/kind build node-image
+          GOFLAGS= $GOBIN/kind build node-image -v 10 --kube-root /home/runner/work/kubernetes/go/src/k8s.io/kubernetes
           # https://github.com/kubernetes-sigs/kind/pull/819
         env:
           GOPATH: /home/runner/work/kubernetes/go
