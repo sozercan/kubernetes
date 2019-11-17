@@ -29,6 +29,12 @@ jobs:
 
       - name: Build kind node-image
         run: |
+          $GOBIN/kind version
+          # https://github.com/kubernetes-sigs/kind/pull/819
+          GOFLAGS= $GOBIN/kind build node-image
+
+      - name: Create kind cluster
+        run: |
           cat <<EOF > "kind-config.yaml"
           # config for 1 control plane node and 2 workers (necessary for conformance)
           kind: Cluster
@@ -38,19 +44,15 @@ jobs:
           - role: worker
           - role: worker
           EOF
-          $GOBIN/kind version
-          # https://github.com/kubernetes-sigs/kind/pull/819
-          GOFLAGS= $GOBIN/kind build node-image
-
-      - name: Create kind cluster
-        run: |
-          GOFLAGS= $GOBIN/kind create cluster --image kindest/node:latest -v=3 --wait=1m --config=kind-config.yaml
+          $GOBIN/kind create cluster --image kindest/node:latest -v=3 --wait=1m --config=kind-config.yaml
           kubectl version
+          kubectl get nodes
 
       - name: Run tests
         run: |
-          ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 '--ginkgo.focus=\[Conformance\]'
-          # '--ginkgo.skip=\[Serial\]'
+          ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 --ginkgo.focus=\[Conformance\] --report-dir=/workspace/_artifacts
+          echo $KUBEROOT
+        working-directory: "/home/runner/work/kubernetes/go/src/k8s.io/kubernetes"
         env:
           GINKGO_PARALLEL: "y"
           KUBERNETES_CONFORMANCE_TEST: "y"
