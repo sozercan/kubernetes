@@ -19,9 +19,9 @@ jobs:
         with:
           path: go/src/k8s.io/kubernetes
 
-      - name: make clean release
+      - name: make quick-release
         run: |
-          make clean release
+          make quick-release
 
       - name: install kubectl
         uses: Azure/setup-kubectl@v1
