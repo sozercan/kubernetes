@@ -40,7 +40,7 @@ jobs:
           kind version
           ginkgo version
           # https://github.com/kubernetes-sigs/kind/pull/819
-          GOFLAGS= kind build node-image
+          GOFLAGS= KUBE_BUILD_CONFORMANCE=y kind build node-image
 
       - name: Create kind cluster
         run: |
