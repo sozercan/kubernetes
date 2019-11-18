@@ -34,11 +34,11 @@ jobs:
 
       - name: Build kind node-image
         run: |
+          export PATH=$(go env GOPATH)/bin:$PATH
+          kind version
           ginkgo version
-          $GOBIN/kind version
-          $GOBIN/ginkgo version
           # https://github.com/kubernetes-sigs/kind/pull/819
-          GOFLAGS= $GOBIN/kind build node-image
+          GOFLAGS= kind build node-image
 
       - name: Create kind cluster
         run: |
@@ -51,15 +51,15 @@ jobs:
           - role: worker
           - role: worker
           EOF
-          $GOBIN/kind create cluster --image kindest/node:latest -v=3 --wait=1m --config=kind-config.yaml
+          kind create cluster --image kindest/node:latest -v=3 --wait=1m --config=kind-config.yaml
           kubectl version
           kubectl get nodes
 
       - name: Run tests
         run: |
+          export PATH=$(go env GOPATH)/bin:$PATH
           ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 --ginkgo.focus=\[Conformance\] --report-dir=_artifacts --v 6
-          echo $KUBEROOT
-        working-directory: "/home/runner/work/kubernetes/go/src/k8s.io/kubernetes"
+        working-directory: /home/runner/work/kubernetes/go/src/k8s.io/kubernetes
         env:
           GINKGO_PARALLEL: "y"
           KUBERNETES_CONFORMANCE_TEST: "y"
