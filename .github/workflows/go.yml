@@ -60,7 +60,7 @@ jobs:
       - name: Run tests
         run: |
           export PATH=$(go env GOPATH)/bin:$PATH
-          ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 --ginkgo.focus=\[Conformance\] --report-dir=_artifacts --v 6
+          ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 --ginkgo.focus=\[Conformance\] --ginkgo.skip=\[Serial\] --report-dir=_artifacts
         working-directory: /home/runner/work/kubernetes/go/src/k8s.io/kubernetes
         env:
           GINKGO_PARALLEL: "y"
