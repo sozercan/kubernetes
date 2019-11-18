@@ -60,7 +60,10 @@ jobs:
       - name: Run tests
         run: |
           export PATH=$(go env GOPATH)/bin:$PATH
+          # run all parallel-safe conformance tests in parallel
           ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 --ginkgo.focus=\[Conformance\] --ginkgo.skip=\[Serial\] --report-dir=_artifacts
+          # ... and finish up with remaining tests in serial
+          ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 --ginkgo.focus=\[Serial\].*\[Conformance\] --report-dir=_artifacts
         working-directory: /home/runner/work/kubernetes/go/src/k8s.io/kubernetes
         env:
           GINKGO_PARALLEL: "y"
