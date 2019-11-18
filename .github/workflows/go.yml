@@ -24,13 +24,15 @@ jobs:
 
       - name: install ginkgo
         run: |
-          go get github.com/onsi/ginkgo/ginkgo
-          go get github.com/onsi/gomega/...
+          sudo apt update
+          sudo apt install -y golang-ginkgo-dev
 
-        # https://github.com/kubernetes-sigs/kind/pull/825
-      - name: Build kind binary from master
+      - name: Download kind binary
         run: |
-          GO111MODULE="on" go get sigs.k8s.io/kind@master
+          export KIND_VERSION=0.6.0
+          curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v${KIND_VERSION}/kind-linux-amd64
+          chmod +x kind-linux-amd64
+          sudo mv kind-linux-amd64 /usr/local/bin/kind
 
       - name: Build kind node-image
         run: |
