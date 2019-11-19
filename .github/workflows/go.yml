@@ -60,17 +60,14 @@ jobs:
       - name: Run tests
         run: |
           export PATH=$(go env GOPATH)/bin:$PATH
-          # run all parallel-safe conformance tests in parallel
-          ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 --ginkgo.focus=\[Conformance\] --ginkgo.skip=\[Serial\] --report-dir=_artifacts
-          # ... and finish up with remaining tests in serial
-          ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 --ginkgo.focus=\[Serial\].*\[Conformance\] --report-dir=_artifacts
+          ./hack/ginkgo-e2e.sh --provider=skeleton --num-nodes=2 --ginkgo.focus=\[Conformance\] --ginkgo.skip= --report-dir=_artifacts --disable-log-dump=true
         working-directory: /home/runner/work/kubernetes/go/src/k8s.io/kubernetes
         env:
-          GINKGO_PARALLEL: "y"
+          GINKGO_NO_COLOR: "y"
           KUBERNETES_CONFORMANCE_TEST: "y"
           KUBERNETES_PROVIDER: skeleton
 
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v1
         with:
           name: artifacts
           path: /home/runner/work/kubernetes/go/src/k8s.io/kubernetes/_artifacts
